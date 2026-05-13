@@ -1,0 +1,1885 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wattoshi — Solcelle-kalkulator</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Mørk seriøs base */
+    --bg-deep: #060D1B;
+    --bg-card: #0E1A2F;
+    --bg-card-2: #142441;
+    --bg-elevated: #182B4F;
+    --border-soft: #1F3358;
+    --border-strong: #2A4576;
+
+    /* Tekst */
+    --txt-primary: #F1ECDD;
+    --txt-secondary: #B8C5D6;
+    --txt-muted: #7F8FA8;
+    --txt-faint: #5C6A85;
+
+    /* Aksent — varm, tillitsvekkende */
+    --btc: #F7931A;
+    --btc-glow: #FFB347;
+    --btc-deep: #C56812;
+    --gold: #C9A961;
+    --gold-glow: #E8C77A;
+
+    /* Status */
+    --green: #4FB874;
+    --red: #E26565;
+
+    /* Eldre aliaser (bakoverkompatibilitet) */
+    --dark: var(--bg-card);
+    --darker: var(--bg-deep);
+    --blue: #2E5A9F;
+    --light: var(--bg-card-2);
+    --grey: var(--bg-elevated);
+    --border: var(--border-soft);
+    --text: var(--txt-primary);
+    --muted: var(--txt-muted);
+    --neon: var(--gold);
+
+    /* Gradienter */
+    --gradient-hero: linear-gradient(135deg, #050B17 0%, #0A1B36 50%, #112C58 100%);
+    --gradient-kpi: linear-gradient(135deg, #FFD580 0%, #F7931A 100%);
+    --gradient-gold: linear-gradient(135deg, #E8C77A 0%, #C9A961 100%);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background:
+      radial-gradient(ellipse at top, rgba(46,90,159,0.18), transparent 60%),
+      radial-gradient(ellipse at bottom right, rgba(247,147,26,0.10), transparent 55%),
+      var(--bg-deep);
+    background-attachment: fixed;
+    color: var(--txt-primary);
+    line-height: 1.5;
+  }
+  /* HERO */
+  .hero {
+    background: var(--gradient-hero);
+    color: var(--txt-primary);
+    padding: 36px 28px 44px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: "";
+    position: absolute;
+    top: -100px;
+    right: -100px;
+    width: 420px;
+    height: 420px;
+    background: radial-gradient(circle, rgba(247,147,26,0.22), transparent 70%);
+    pointer-events: none;
+  }
+  .hero::after {
+    content: "";
+    position: absolute;
+    bottom: -140px;
+    left: -100px;
+    width: 380px;
+    height: 380px;
+    background: radial-gradient(circle, rgba(201,169,97,0.10), transparent 70%);
+    pointer-events: none;
+  }
+  .hero-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+  .hero-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+  .wat-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: -0.3px;
+  }
+  a.wat-logo {
+    display: inline-block;
+    text-decoration: none;
+    transition: opacity 0.15s;
+  }
+  a.wat-logo:hover {
+    opacity: 0.85;
+  }
+  .wat-logo .wordmark-svg {
+    height: 42px;
+    width: auto;
+    color: white;
+    filter: drop-shadow(0 2px 14px rgba(0,0,0,0.25));
+  }
+  .wat-logo .wordmark-svg path[fill="#F7931A"] {
+    filter: drop-shadow(0 0 10px rgba(247,147,26,0.85));
+  }
+  a.footer-logo-link {
+    display: inline-flex;
+    align-items: baseline;
+    text-decoration: none;
+    transition: opacity 0.15s;
+  }
+  a.footer-logo-link:hover {
+    opacity: 0.85;
+  }
+  .hero-eyebrow {
+    text-transform: uppercase;
+    font-size: 11.5px;
+    letter-spacing: 2.5px;
+    color: var(--gold);
+    margin-bottom: 6px;
+    font-weight: 700;
+  }
+  .hero h1 {
+    margin: 0 0 10px 0;
+    font-size: 38px;
+    line-height: 1.08;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    max-width: 720px;
+  }
+  .hero h1 .accent {
+    background: var(--gradient-kpi);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero p.lead {
+    margin: 0 0 24px 0;
+    color: var(--txt-secondary);
+    font-size: 15px;
+    max-width: 640px;
+    line-height: 1.55;
+  }
+  .strategy-card {
+    background: rgba(8, 18, 38, 0.65);
+    border: 1px solid var(--border-strong);
+    backdrop-filter: blur(6px);
+    border-radius: 14px;
+    padding: 20px 24px;
+    max-width: 760px;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.05) inset,
+      0 8px 24px rgba(0,0,0,0.30);
+  }
+  .strategy-card h3 {
+    margin: 0 0 8px 0;
+    font-size: 12.5px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--gold);
+    font-weight: 700;
+  }
+  .strategy-card p {
+    margin: 0;
+    color: var(--txt-secondary);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  @media (max-width: 700px) {
+    .hero h1 { font-size: 30px; }
+    .hero { padding: 26px 20px 32px; }
+  }
+
+  /* STRATEGI-PILARER */
+  .strategy-pillars {
+    background:
+      radial-gradient(ellipse at 50% 0%, rgba(247,147,26,0.06), transparent 50%),
+      var(--bg-deep);
+    padding: 56px 28px 64px;
+  }
+  .strategy-pillars-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .pillars-lead {
+    max-width: 900px;
+    margin: 0 auto 44px;
+    text-align: center;
+  }
+  .pillars-eyebrow {
+    display: inline-block;
+    text-transform: uppercase;
+    font-size: 11.5px;
+    letter-spacing: 3px;
+    color: var(--gold);
+    font-weight: 700;
+    margin-bottom: 20px;
+    padding: 6px 14px;
+    border: 1px solid rgba(201,169,97,0.35);
+    border-radius: 100px;
+    background: rgba(201,169,97,0.06);
+  }
+  .pillars-headline {
+    font-size: 24px;
+    line-height: 1.45;
+    font-weight: 500;
+    margin: 0;
+    color: var(--txt-primary);
+    letter-spacing: -0.2px;
+  }
+  .pillars-accent {
+    color: var(--btc-glow);
+    font-weight: 700;
+  }
+  @media (max-width: 700px) {
+    .pillars-headline { font-size: 19px; }
+  }
+  .pillars-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+  @media (max-width: 700px) {
+    .pillars-grid { grid-template-columns: 1fr; }
+  }
+  .pillar {
+    background:
+      radial-gradient(circle at 100% 0%, rgba(247,147,26,0.06), transparent 65%),
+      linear-gradient(150deg, #0F1D33 0%, #0A1A2F 100%);
+    border: 1px solid var(--border-soft);
+    border-radius: 14px;
+    padding: 28px 26px 26px;
+    position: relative;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+  }
+  .pillar:hover {
+    transform: translateY(-2px);
+    border-color: rgba(247,147,26,0.45);
+    box-shadow: 0 0 0 1px rgba(247,147,26,0.10) inset, 0 20px 40px rgba(0,0,0,0.45);
+  }
+  .pillar-num {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-weight: 900;
+    font-size: 26px;
+    color: var(--btc);
+    margin-bottom: 10px;
+    letter-spacing: -0.5px;
+    line-height: 1;
+  }
+  .pillar-tag {
+    display: inline-block;
+    margin-bottom: 12px;
+    padding: 3px 10px;
+    background: rgba(247,147,26,0.18);
+    border: 1px solid rgba(247,147,26,0.40);
+    color: var(--btc-glow);
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    border-radius: 100px;
+  }
+  /* Seksjons-header med badge over tittel i kalkulator-inputs */
+  .section-head {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 26px;
+  }
+  .section-head h2 {
+    margin: 0 !important;
+    padding-bottom: 12px;
+  }
+  .section-head .step-tag {
+    margin: 0;
+    padding: 4px 11px;
+  }
+  .pillar.pillar-start {
+    border-color: rgba(247,147,26,0.30);
+    box-shadow: 0 0 0 1px rgba(247,147,26,0.10) inset, 0 0 28px rgba(247,147,26,0.10);
+  }
+  .pillar.pillar-extra {
+    background:
+      radial-gradient(circle at 100% 0%, rgba(201,169,97,0.08), transparent 65%),
+      linear-gradient(150deg, #11203A 0%, #0B1A30 100%);
+    border-color: rgba(201,169,97,0.30);
+  }
+  .pillar.pillar-extra:hover {
+    border-color: rgba(201,169,97,0.55);
+    box-shadow: 0 0 0 1px rgba(201,169,97,0.12) inset, 0 20px 40px rgba(0,0,0,0.45);
+  }
+  .pillar.pillar-extra .pillar-num {
+    color: var(--gold);
+  }
+  .pillar-tag.gold {
+    background: rgba(201,169,97,0.16);
+    border: 1px solid rgba(201,169,97,0.45);
+    color: var(--gold-glow);
+  }
+  .pillar-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 18px;
+    padding: 11px 18px;
+    background: linear-gradient(135deg, var(--btc) 0%, var(--btc-deep) 100%);
+    color: white;
+    text-decoration: none;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 13.5px;
+    letter-spacing: 0.2px;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 16px rgba(247,147,26,0.30), 0 0 0 1px rgba(255,210,122,0.2) inset;
+  }
+  .pillar-cta:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 22px rgba(247,147,26,0.45), 0 0 0 1px rgba(255,210,122,0.3) inset;
+  }
+  .pillar-cta span {
+    transition: transform 0.15s;
+  }
+  .pillar-cta:hover span {
+    transform: translateX(3px);
+  }
+  .pillar h3 {
+    font-size: 19px;
+    line-height: 1.3;
+    margin: 0 0 12px 0;
+    color: var(--txt-primary);
+    font-weight: 700;
+    letter-spacing: -0.2px;
+  }
+  .pillar p {
+    margin: 0;
+    color: var(--txt-secondary);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 900px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-soft);
+    border-radius: 14px;
+    padding: 24px 26px;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.04) inset,
+      0 8px 32px rgba(0,0,0,0.35);
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .card:hover {
+    border-color: var(--border-strong);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.04) inset,
+      0 12px 40px rgba(0,0,0,0.45);
+  }
+  .card h2 {
+    margin: 0 0 18px 0;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1.3px;
+    color: var(--txt-primary);
+    padding-bottom: 12px;
+    position: relative;
+    font-weight: 700;
+  }
+  .card h2::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 42px;
+    height: 3px;
+    background: var(--gradient-kpi);
+    border-radius: 2px;
+  }
+  .field {
+    margin-bottom: 16px;
+  }
+  .field label {
+    display: block;
+    font-size: 12.5px;
+    color: var(--txt-secondary);
+    margin-bottom: 6px;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+  }
+  .field .hint {
+    font-size: 11px;
+    color: var(--txt-muted);
+    margin-top: 4px;
+    line-height: 1.4;
+  }
+  .field input[type=number] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid var(--border-soft);
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    background: var(--bg-card-2);
+    color: var(--txt-primary);
+    transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+  }
+  .field input[type=number]:focus {
+    outline: none;
+    border-color: var(--btc);
+    box-shadow: 0 0 0 3px rgba(247,147,26,0.2);
+    background: var(--bg-elevated);
+  }
+  .field .value {
+    color: var(--btc-glow);
+    font-weight: 700;
+    font-size: 13.5px;
+  }
+  .field input[type=range] {
+    width: 100%;
+    margin-top: 6px;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 10px;
+    border-radius: 6px;
+    outline: none;
+    background:
+      linear-gradient(90deg, var(--btc) 0%, var(--btc) var(--fill, 50%), var(--bg-elevated) var(--fill, 50%), var(--bg-elevated) 100%);
+    border: 1px solid var(--border-soft);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+  }
+  .field input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #FFE3A8 0%, var(--btc) 60%, #C56812 100%);
+    border: 3px solid white;
+    box-shadow:
+      0 0 0 1px rgba(10,37,64,0.20),
+      0 3px 10px rgba(247,147,26,0.5),
+      0 0 18px rgba(247,147,26,0.35);
+    cursor: pointer;
+    transition: transform 0.1s;
+  }
+  .field input[type=range]::-webkit-slider-thumb:hover {
+    transform: scale(1.12);
+  }
+  .field input[type=range]::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #FFE3A8 0%, var(--btc) 60%, #C56812 100%);
+    border: 3px solid white;
+    box-shadow: 0 0 0 1px rgba(10,37,64,0.20), 0 3px 10px rgba(247,147,26,0.5);
+    cursor: pointer;
+  }
+  .toggle-group {
+    display: flex;
+    gap: 3px;
+    background: var(--bg-deep);
+    padding: 4px;
+    border-radius: 10px;
+    border: 1px solid var(--border-soft);
+  }
+  .toggle-group button {
+    flex: 1;
+    padding: 9px 10px;
+    border: none;
+    background: transparent;
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--txt-muted);
+    font-family: inherit;
+    transition: all 0.15s;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .toggle-group button:hover:not(.active) {
+    color: var(--txt-primary);
+    background: var(--bg-card-2);
+  }
+  .toggle-group button.active {
+    background: linear-gradient(135deg, var(--btc) 0%, var(--btc-deep) 100%);
+    color: white;
+    font-weight: 700;
+    box-shadow:
+      0 2px 8px rgba(247,147,26,0.35),
+      0 0 0 1px rgba(255,210,122,0.3) inset;
+  }
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .kpi {
+    position: relative;
+    background:
+      radial-gradient(circle at 100% 0%, rgba(201,169,97,0.08), transparent 60%),
+      linear-gradient(135deg, #0F1D33 0%, #0A1A2F 60%, #122745 100%);
+    color: var(--txt-primary);
+    padding: 18px 20px;
+    border-radius: 12px;
+    border: 1px solid var(--border-soft);
+    border-left: 3px solid var(--gold);
+    overflow: hidden;
+    transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.03) inset,
+      0 4px 14px rgba(0,0,0,0.30);
+  }
+  .kpi:hover {
+    transform: translateY(-1px);
+    border-color: var(--border-strong);
+    border-left-color: var(--gold-glow);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.04) inset,
+      0 10px 28px rgba(0,0,0,0.40);
+  }
+  .kpi.big {
+    grid-column: 1 / -1;
+    background:
+      radial-gradient(circle at 100% 0%, rgba(247,147,26,0.35), transparent 55%),
+      linear-gradient(135deg, #0A1830 0%, #0A2040 50%, #182F58 100%);
+    border: 1px solid rgba(247,147,26,0.30);
+    border-left: 4px solid var(--btc);
+    box-shadow:
+      0 0 0 1px rgba(247,147,26,0.10) inset,
+      0 8px 36px rgba(247,147,26,0.18),
+      0 8px 28px rgba(0,0,0,0.45);
+  }
+  .kpi.big::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 0%, rgba(247,147,26,0.05) 100%);
+    pointer-events: none;
+  }
+  .kpi .label {
+    font-size: 11.5px;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    font-weight: 700;
+  }
+  .kpi.big .label {
+    color: var(--btc-glow);
+    letter-spacing: 1.6px;
+  }
+  .kpi .num {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--txt-primary);
+    margin-top: 6px;
+    letter-spacing: -0.3px;
+  }
+  .kpi.big .num {
+    font-size: 40px;
+    background: linear-gradient(90deg, #FFFFFF 0%, var(--btc-glow) 90%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 0 32px rgba(247,147,26,0.30);
+  }
+  .kpi .sublabel {
+    font-size: 11.5px;
+    color: var(--txt-muted);
+    margin-top: 6px;
+    line-height: 1.4;
+  }
+  .kpi .sublabel strong {
+    color: var(--txt-primary);
+  }
+  .kpi.big .sublabel {
+    color: var(--txt-secondary);
+  }
+  .kpi.big .sublabel strong {
+    color: var(--txt-primary);
+  }
+  .contrib-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 14px;
+    font-size: 11.5px;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+  .chip .lbl {
+    opacity: 0.85;
+    font-weight: 500;
+  }
+  .chip.btc {
+    background: rgba(247,147,26,0.20);
+    color: var(--btc-glow);
+    border: 1px solid rgba(247,147,26,0.50);
+    box-shadow: 0 0 14px rgba(247,147,26,0.18);
+  }
+  .chip.miner {
+    background: rgba(201,169,97,0.18);
+    color: var(--gold-glow);
+    border: 1px solid rgba(201,169,97,0.55);
+    box-shadow: 0 0 14px rgba(201,169,97,0.15);
+  }
+  .scenario-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .scenario-tabs button {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--muted);
+    font-family: inherit;
+    border-bottom: 3px solid transparent;
+  }
+  .scenario-tabs button.active {
+    color: var(--dark);
+    border-bottom-color: var(--btc);
+    font-weight: 700;
+  }
+  .compare-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 8px;
+    font-size: 13px;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .compare-table th, .compare-table td {
+    padding: 11px 14px;
+    text-align: right;
+    border-bottom: 1px solid var(--border-soft);
+    color: var(--txt-primary);
+  }
+  .compare-table tr:last-child td {
+    border-bottom: none;
+  }
+  .compare-table th:first-child, .compare-table td:first-child {
+    text-align: left;
+    color: var(--txt-muted);
+    font-weight: 500;
+  }
+  .compare-table th {
+    background: linear-gradient(135deg, var(--bg-card-2) 0%, var(--bg-elevated) 100%);
+    color: var(--txt-primary);
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 11.5px;
+    letter-spacing: 0.8px;
+    border-bottom: 1px solid var(--border-strong);
+  }
+  .compare-table th:last-child {
+    background: linear-gradient(135deg, rgba(247,147,26,0.20) 0%, rgba(247,147,26,0.30) 100%);
+    color: var(--btc-glow);
+    border-bottom: 1px solid rgba(247,147,26,0.45);
+  }
+  /* Wattoshi-kolonnen fremheves med orange tint */
+  .compare-table tbody td:last-child {
+    background: rgba(247,147,26,0.07);
+    color: var(--txt-primary);
+    border-left: 1px solid rgba(247,147,26,0.18);
+    font-weight: 600;
+  }
+  .compare-table .highlight {
+    background: rgba(247,147,26,0.04);
+    font-weight: 700;
+  }
+  .compare-table .highlight td:first-child {
+    color: var(--txt-primary);
+  }
+  .compare-table .highlight td:last-child {
+    background: linear-gradient(135deg, rgba(247,147,26,0.22) 0%, rgba(255,210,122,0.26) 100%);
+    color: var(--btc-glow);
+    font-weight: 800;
+    text-shadow: 0 0 12px rgba(247,147,26,0.25);
+  }
+  .chart-wrap {
+    margin-top: 24px;
+    background: var(--bg-card);
+    padding: 26px;
+    border: 1px solid var(--border-soft);
+    border-radius: 14px;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.04) inset,
+      0 8px 32px rgba(0,0,0,0.35);
+  }
+  .chart-wrap h2 {
+    margin: 0;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1.3px;
+    color: var(--txt-primary);
+    font-weight: 700;
+  }
+  .chart-panel {
+    background: linear-gradient(180deg, #F7F9FC 0%, #EAEFF6 100%);
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    padding: 22px 20px 18px;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.6) inset,
+      0 4px 16px rgba(0,0,0,0.35);
+    min-height: 540px;
+  }
+  details {
+    margin-top: 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-soft);
+    border-radius: 14px;
+    padding: 18px 24px;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.04) inset,
+      0 8px 32px rgba(0,0,0,0.35);
+  }
+  details summary {
+    cursor: pointer;
+    font-weight: 700;
+    color: var(--txt-primary);
+    user-select: none;
+    text-transform: uppercase;
+    font-size: 13px;
+    letter-spacing: 1px;
+    padding: 4px 0;
+  }
+  details summary::before {
+    content: "⚙";
+    color: var(--btc);
+    margin-right: 8px;
+  }
+  details[open] summary {
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--border-soft);
+    padding-bottom: 10px;
+  }
+  details h3 {
+    color: var(--txt-primary) !important;
+    border-left: 3px solid var(--btc);
+    padding-left: 10px;
+    margin-left: -10px;
+  }
+  details p, details .hint {
+    color: var(--txt-muted);
+  }
+  .adv-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin-top: 8px;
+  }
+  footer.wat-footer {
+    background: var(--gradient-hero);
+    color: #C5D2E8;
+    padding: 28px 20px 32px;
+    margin-top: 30px;
+    position: relative;
+    overflow: hidden;
+  }
+  footer.wat-footer::before {
+    content: "";
+    position: absolute;
+    top: -80px;
+    right: -80px;
+    width: 240px;
+    height: 240px;
+    background: radial-gradient(circle, rgba(247,147,26,0.12), transparent 70%);
+    pointer-events: none;
+  }
+  .wat-footer-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+    text-align: center;
+  }
+  .wat-footer-brand {
+    font-size: 15px;
+    color: white;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 4px;
+  }
+  .footer-wordmark-svg {
+    height: 24px;
+    width: auto;
+    color: white;
+  }
+  .footer-tag {
+    color: #94A3B8;
+    font-size: 13px;
+  }
+  .wat-disclaimer {
+    margin: 0 auto;
+    max-width: 720px;
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: #94A3B8;
+  }
+  .wat-source {
+    display: block;
+    margin-top: 6px;
+    font-size: 11px;
+    color: #6E7C8F;
+  }
+  .wat-contact {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    font-size: 13px;
+    color: var(--txt-secondary);
+  }
+  .wat-contact a {
+    color: var(--btc-glow);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.15s;
+  }
+  .wat-contact a:hover {
+    color: white;
+    text-shadow: 0 0 12px rgba(247,147,26,0.45);
+  }
+  .wat-contact-sep {
+    margin: 0 10px;
+    color: var(--txt-faint);
+  }
+  .narrative {
+    background: var(--dark);
+    color: white;
+    padding: 22px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+  }
+  .narrative h3 {
+    margin: 0 0 8px 0;
+    font-size: 15px;
+    color: var(--btc);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .narrative p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .miner-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+</style>
+</head>
+<body>
+
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-top">
+      <a class="wat-logo" href="https://wattoshi.no" target="_blank" rel="noopener" aria-label="Wattoshi">
+        <svg class="wordmark-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 60" aria-label="Wattoshi">
+          <defs>
+            <clipPath id="wlc1"><path d="M 1.234375 16 L 66 16 L 66 60 L 1.234375 60 Z"/></clipPath>
+            <clipPath id="wlc2"><path d="M 279 18 L 298.671875 18 L 298.671875 60 L 279 60 Z"/></clipPath>
+          </defs>
+          <g clip-path="url(#wlc1)"><path fill="currentColor" d="M 1.234375 20.414062 L 1.234375 18.773438 L 17.394531 18.773438 L 17.394531 44.707031 C 17.394531 50.492188 19.589844 53.921875 23.492188 53.921875 C 28.648438 53.921875 30.371094 48.226562 30.371094 43.925781 L 30.371094 25.96875 C 30.371094 24.085938 29.429688 22.066406 27.863281 20.96875 L 27.167969 20.429688 L 27.167969 18.792969 L 43.328125 18.792969 L 43.328125 43.15625 C 43.328125 50.664062 44.339844 53.9375 48.484375 53.9375 C 56.0625 53.9375 61.058594 43.472656 60.832031 27.621094 C 56.375 28.164062 52.945312 25.359375 52.945312 21.839844 C 52.945312 18.792969 55.519531 16.300781 59.109375 16.300781 C 62.15625 16.300781 66.144531 18.253906 65.519531 30.042969 C 64.578125 46.832031 55.835938 60.035156 43.800781 60.035156 C 37.703125 60.035156 33.332031 56.761719 31.453125 50.976562 C 29.101562 56.671875 23.789062 60.035156 17.308594 60.035156 C 9.035156 60.035156 4.507812 54.253906 4.507812 45.578125 L 4.507812 25.96875 C 4.507812 24.085938 3.496094 22.066406 1.929688 20.96875 L 1.234375 20.429688 Z"/></g>
+          <path fill="currentColor" d="M 104.183594 33.144531 L 104.183594 52.667969 C 104.183594 54.707031 104.808594 55.472656 106.378906 55.472656 C 106.378906 55.472656 107.542969 55.472656 108.171875 54.375 C 108.171875 56.324219 105.367188 60 99.496094 60 C 95.28125 60 92.304688 58.050781 91.453125 54.0625 C 88.875 57.960938 84.660156 60 79.972656 60 C 72.78125 60 67.242188 55.316406 67.242188 48.277344 C 67.242188 33.910156 90.128906 35.476562 90.667969 28.980469 C 89.101562 23.824219 84.972656 22.101562 82.238281 22.101562 C 81.140625 22.101562 80.355469 22.328125 79.972656 22.640625 C 81.296875 23.738281 82.238281 25.445312 82.238281 27.414062 C 82.238281 30.6875 79.503906 33.421875 76.074219 33.421875 C 72.640625 33.421875 69.90625 30.6875 69.90625 27.101562 C 69.90625 21.71875 75.757812 17.886719 85.597656 17.886719 C 94.34375 17.886719 104.183594 20.933594 104.183594 33.109375 Z M 91.207031 34.78125 C 87.304688 37.585938 80.199219 38.925781 80.199219 45.632812 C 80.199219 49.53125 82.621094 51.953125 85.128906 51.953125 C 87.933594 51.953125 90.753906 48.90625 91.226562 44.289062 L 91.226562 34.761719 Z"/>
+          <path fill="currentColor" d="M 111.359375 23.617188 L 105.941406 23.617188 L 107.683594 15.292969 L 107.875 15.292969 C 112.875 15.292969 121.148438 7.558594 121.148438 2.804688 L 124.246094 2.804688 L 124.246094 15.292969 L 128.863281 15.292969 L 127.121094 23.617188 L 124.246094 23.617188 L 124.246094 52.667969 C 124.246094 54.707031 124.945312 55.472656 126.441406 55.472656 C 126.441406 55.472656 127.695312 55.472656 128.324219 54.375 C 128.324219 56.324219 125.519531 60 119.578125 60 C 114.425781 60 111.375 57.195312 111.375 51.011719 L 111.375 23.597656 Z"/>
+          <path fill="currentColor" d="M 135.132812 23.617188 L 129.714844 23.617188 L 131.457031 15.292969 L 131.648438 15.292969 C 136.648438 15.292969 144.921875 7.558594 144.921875 2.804688 L 148.019531 2.804688 L 148.019531 15.292969 L 156.117188 15.292969 L 154.378906 23.617188 L 148.019531 23.617188 L 148.019531 52.667969 C 148.019531 54.707031 148.71875 55.472656 150.214844 55.472656 C 150.214844 55.472656 151.46875 55.472656 152.097656 54.375 C 152.097656 56.324219 149.292969 60 143.351562 60 C 138.199219 60 135.148438 57.195312 135.148438 51.011719 L 135.148438 23.597656 Z"/>
+          <path fill="currentColor" d="M 198.546875 29.398438 C 198.546875 22.363281 205.113281 17.921875 215.109375 17.921875 C 225.105469 17.921875 230.488281 22.695312 230.488281 27.292969 C 230.488281 30.496094 228.066406 32.917969 225.019531 32.917969 C 221.972656 32.917969 219.480469 30.496094 219.480469 27.449219 C 219.480469 25.722656 220.265625 24.085938 221.519531 23.148438 C 220.890625 22.449219 218.785156 21.734375 216.519531 21.734375 C 212.933594 21.734375 210.894531 23.617188 210.894531 25.882812 C 210.894531 33.144531 231.113281 35.179688 231.113281 48.296875 C 231.113281 55.644531 224.792969 60.015625 214.167969 60.015625 C 202.917969 60.015625 196.59375 55.175781 196.59375 49.863281 C 196.59375 46.277344 199.328125 43.453125 202.847656 43.453125 C 206.367188 43.453125 209.011719 46.257812 209.011719 49.707031 C 209.011719 51.65625 208.074219 53.292969 206.75 54.480469 C 207.53125 55.019531 208.945312 55.734375 211.902344 55.734375 C 216.589844 55.734375 218.695312 53.9375 218.695312 51.429688 C 218.695312 43.925781 198.546875 41.433594 198.546875 29.398438 Z"/>
+          <path fill="currentColor" d="M 261.421875 33.214844 C 261.421875 27.519531 259.222656 24.070312 255.324219 24.070312 C 251.648438 24.070312 249 27.429688 248.445312 32.585938 L 248.445312 52.039062 C 248.445312 53.921875 249.542969 55.871094 250.953125 57.039062 L 251.734375 57.578125 L 251.734375 59.214844 L 232.28125 59.214844 L 232.28125 57.578125 L 232.976562 57.039062 C 234.546875 55.871094 235.554688 53.921875 235.554688 52.039062 L 235.554688 12.210938 C 235.554688 10.328125 234.546875 8.308594 232.976562 7.210938 L 232.28125 6.582031 L 232.28125 5.015625 L 245.238281 2.59375 L 248.445312 2.59375 L 248.445312 24.941406 C 251.246094 20.570312 255.953125 17.902344 261.488281 17.902344 C 269.851562 17.902344 274.378906 23.757812 274.378906 32.429688 L 274.378906 52.648438 C 274.378906 54.6875 275.003906 55.453125 276.570312 55.453125 C 276.570312 55.453125 277.738281 55.453125 278.453125 54.355469 C 278.453125 56.308594 275.5625 59.984375 269.710938 59.984375 C 264.554688 59.984375 261.4375 57.179688 261.4375 50.996094 L 261.4375 33.195312 Z"/>
+          <g clip-path="url(#wlc2)"><path fill="currentColor" d="M 298.671875 57.578125 L 298.671875 59.214844 L 279.21875 59.214844 L 279.21875 57.578125 L 279.917969 57.039062 C 281.484375 55.871094 282.492188 53.921875 282.492188 52.039062 L 282.492188 28.371094 C 282.492188 26.492188 281.484375 24.46875 279.917969 23.371094 L 279.21875 22.832031 L 279.21875 21.195312 L 292.175781 18.773438 L 295.382812 18.773438 L 295.382812 52.039062 C 295.382812 53.921875 296.476562 55.871094 297.890625 57.039062 Z"/></g>
+          <path fill="#F7931A" d="M 288.921875 0 C 293.0625 0 296.425781 3.429688 296.425781 7.507812 C 296.425781 11.582031 293.0625 14.925781 288.921875 14.925781 C 284.777344 14.925781 281.5 11.566406 281.5 7.507812 C 281.5 3.449219 284.863281 0 288.921875 0 Z"/>
+          <path fill="currentColor" d="M 175.035156 17.902344 C 187.609375 17.902344 195.8125 26.265625 195.8125 38.683594 C 195.8125 51.101562 187.382812 60 174.652344 60 C 161.917969 60 153.714844 51.484375 153.714844 38.996094 C 153.714844 26.507812 162.300781 17.902344 175.035156 17.902344 Z M 174.652344 55.15625 C 179.578125 55.15625 182.855469 48.679688 182.855469 38.996094 C 182.855469 29.3125 179.578125 22.832031 174.738281 22.832031 C 169.894531 22.832031 166.691406 29.3125 166.691406 39.152344 C 166.691406 48.992188 169.894531 55.15625 174.652344 55.15625 Z"/>
+        </svg>
+      </a>
+    </div>
+    <div class="hero-eyebrow">ROI-kalkulator</div>
+    <h1>Solcelle &amp; <span class="accent">Bitcoin-strategi</span></h1>
+    <p class="lead">Sett opp anlegget — se hvordan Bitcoin kan påvirke ROI over tid.</p>
+    <div class="strategy-card">
+      <h3>Strategien</h3>
+      <p>Wattoshi konverterer energi-verdi til Bitcoin over tid. Verdien som konverteres til Bitcoin er andelen anlegget eksporterer over tid. I tillegg kan man legge til ASIC-miner(e) som gir flere muligheter og bedre ROI.</p>
+    </div>
+  </div>
+</section>
+
+<main>
+
+<div class="grid">
+
+  <!-- INPUTS -->
+  <div class="card">
+    <h2>Solanlegget</h2>
+
+    <div class="field">
+      <label>Anleggsstørrelse <span class="value" id="kwp_label">15,64 kWp</span></label>
+      <input type="number" id="kwp" value="15.64" step="0.1" min="1" max="100">
+    </div>
+
+    <div class="field">
+      <label>Estimert årsproduksjon <span class="value" id="prod_label">16 169 kWh</span></label>
+      <input type="number" id="prod" value="16169" step="100" min="1000" max="200000">
+      <div class="hint">Default: 1 034 kWh/kWp. Juster hvis du har anslag fra installatør.</div>
+    </div>
+
+    <div class="field">
+      <label>Investering etter Enova (ink mva) <span class="value" id="inv_label">227 500 kr</span></label>
+      <input type="number" id="invest" value="227500" step="1000" min="50000" max="2000000">
+    </div>
+
+    <div class="field">
+      <label>Egenforbruk <span class="value" id="self_label">30 % — eksport: 70 % (11 318 kWh)</span></label>
+      <input type="range" id="self_use" value="30" min="10" max="80" step="5">
+      <div class="hint">Andel av produksjonen du forbruker selv. Resten eksporteres. Brukes likt for "Solcelle alene" og "Med Wattoshi" — det er anleggets faktiske situasjon. En miner i mixen vil i praksis dra denne andelen oppover, juster da slideren manuelt.</div>
+    </div>
+
+    <div class="section-head"><span class="pillar-tag step-tag">Steg 1 · Sol-overskudd til BTC</span><h2>BTC-konvertering av eksport</h2></div>
+    <div class="field">
+      <label>Andel av eksport-inntekt som konverteres til BTC: <span class="value" id="conv_label">100 %</span></label>
+      <input type="range" id="convert" value="100" min="0" max="100" step="10">
+      <div class="hint">Wattoshi sporer all solar-eksport og kjøper BTC for andelen du velger.</div>
+    </div>
+
+    <div class="section-head"><span class="pillar-tag step-tag">Steg 2 · Mining med sol-overskudd</span><h2>Miner (valgfritt)</h2></div>
+    <div class="field">
+      <label>Antall minere</label>
+      <div class="toggle-group" id="miner_count">
+        <button data-val="0" class="active">Ingen</button>
+        <button data-val="1">1</button>
+        <button data-val="2">2</button>
+        <button data-val="3">3</button>
+      </div>
+    </div>
+    <div id="miner_specs">
+      <div class="miner-row">
+        <div class="field">
+          <label>Effekt per miner <span class="value">kW</span></label>
+          <input type="number" id="miner_kw" value="3.5" step="0.1" min="1" max="20">
+        </div>
+        <div class="field">
+          <label>Hashrate per miner <span class="value">TH/s</span></label>
+          <input type="number" id="miner_th" value="200" step="10" min="50" max="500">
+        </div>
+      </div>
+      <div class="field">
+        <label>Pris per miner inkl. installasjon <span class="value" id="miner_price_label">35 000 kr</span></label>
+        <input type="number" id="miner_price" value="35000" step="1000" min="0" max="500000">
+        <div class="hint">Engangskostnad som legges til investeringen. Default: typisk pris for Antminer S21 levert og montert.</div>
+      </div>
+      <div class="hint" style="margin-top:-6px;margin-bottom:10px">Wattoshi anbefaler maskin etter behov og leverer på forespørsel.</div>
+    </div>
+
+    <h2 style="margin-top:22px">BTC-prisbane</h2>
+    <div class="field">
+      <label>Antatt årlig BTC-vekst: <span class="value" id="growth_label">+20 %</span></label>
+      <input type="range" id="growth_slider" value="20" min="-20" max="40" step="5">
+      <div class="hint">Snitt årlig vekst i USD over hele perioden. Negative verdier modellerer bear-scenario. Historisk har BTC vokst mer over 10-årshorisont, men volatiliteten er stor.</div>
+    </div>
+
+    <h2 style="margin-top:22px">Skattevisning</h2>
+    <div class="field">
+      <label>Hvordan vise BTC-stack-verdi</label>
+      <div class="toggle-group" id="tax_toggle">
+        <button data-val="off" class="active">Brutto</button>
+        <button data-val="on">Etter 22 % skatt</button>
+      </div>
+      <div class="hint">Norsk kapitalgevinstskatt: 22 % på (exit-verdi − kostpris) ved salg av BTC. Kostpris = markedsverdi ved produksjons-/kjøpstidspunkt.</div>
+    </div>
+
+  </div>
+
+  <!-- RESULTS -->
+  <div class="card">
+    <h2>Resultat over <span id="result_period">10</span> år</h2>
+
+    <div class="kpi-grid">
+      <div class="kpi big">
+        <div class="label">Akkumulert verdi etter <span id="kpi_period">10</span> år</div>
+        <div class="num" id="kpi_total">—</div>
+        <div class="sublabel" id="kpi_total_sub">Sum av oppspart strømøkonomi og BTC-stack til markedspris</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Anlegget tilbakebetalt</div>
+        <div class="num" id="kpi_payback">—</div>
+        <div class="sublabel" id="kpi_payback_sub">Solcelle alene: —</div>
+      </div>
+      <div class="kpi">
+        <div class="label">BTC-stack etter <span id="kpi_stack_period">10</span> år</div>
+        <div class="num" id="kpi_stack">—</div>
+        <div class="sublabel" id="kpi_stack_sub">Verdi: —</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Årlig gevinst på egen strøm</div>
+        <div class="num" id="kpi_cash">—</div>
+        <div class="sublabel">Sparte strømutgifter (egenforbruk) + eventuell kontant fra salg som ikke konverteres til BTC</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Nedbetaling raskere</div>
+        <div class="num" id="kpi_saved">—</div>
+        <div class="sublabel" id="kpi_saved_sub">Vs. solcelle alene</div>
+      </div>
+    </div>
+
+    <h2 style="margin-top:22px">Sammenligning</h2>
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th></th>
+          <th>Solcelle alene</th>
+          <th>Med Wattoshi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Investering</td><td id="tab_inv_a">—</td><td id="tab_inv_b">—</td></tr>
+        <tr><td>Årlig drift-kontant</td><td id="tab_cash_a">—</td><td id="tab_cash_b">—</td></tr>
+        <tr><td>BTC akkumulert år <span class="tab-year">10</span></td><td>—</td><td id="tab_btc">—</td></tr>
+        <tr><td>BTC-stack-verdi år <span class="tab-year">10</span></td><td>—</td><td id="tab_stack">—</td></tr>
+        <tr><td>Sparte oppvarmingskost</td><td>—</td><td id="tab_heat">—</td></tr>
+        <tr class="highlight"><td>Total verdi år <span class="tab-year">10</span></td><td id="tab_total_a">—</td><td id="tab_total_b">—</td></tr>
+        <tr class="highlight"><td>Nedbetalt i år</td><td id="tab_pb_a">—</td><td id="tab_pb_b">—</td></tr>
+      </tbody>
+    </table>
+
+  </div>
+</div>
+
+<div class="chart-wrap">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+    <h2 style="margin:0">Utvikling — netto vs. investering</h2>
+    <div class="toggle-group" id="period_pick" style="width:auto">
+      <button data-val="5">5 år</button>
+      <button data-val="10" class="active">10 år</button>
+      <button data-val="15">15 år</button>
+      <button data-val="20">20 år</button>
+      <button data-val="25">25 år</button>
+      <button data-val="30">30 år</button>
+    </div>
+  </div>
+  <div class="chart-panel">
+    <canvas id="chart" style="height:500px;max-height:500px"></canvas>
+  </div>
+  <div style="font-size:11.5px;color:var(--txt-muted);margin-top:12px;text-align:center">
+    Y-aksen viser netto verdi etter at investeringen er trukket fra. Oransje = under break-even (anlegget ikke nedbetalt), grønn = over break-even.
+  </div>
+</div>
+
+<details open>
+  <summary>Antakelser og parametere</summary>
+
+  <h3 style="margin:14px 0 8px 0;font-size:13px;text-transform:uppercase;letter-spacing:0.4px;color:var(--dark);">Strømprismodell — hva du betaler/får per kWh</h3>
+  <div class="field">
+    <label>Velg modell</label>
+    <div class="toggle-group" id="price_model">
+      <button data-val="market" class="active">Markedsbasert (spot + nettleie)</button>
+      <button data-val="norge">Norgespris (fastpris)</button>
+    </div>
+    <div class="hint">Norgespris: du betaler fast 50 øre/kWh + nettleie på alt forbruk. Salg/eksport er fortsatt markedsbasert spot.</div>
+  </div>
+
+  <div id="market_fields" class="adv-grid">
+    <div class="field">
+      <label>Spotpris snitt — kjøp (NOK/kWh)</label>
+      <input type="number" id="spot" value="0.80" step="0.05">
+      <div class="hint">Snitt over året, inkl. mva.</div>
+    </div>
+    <div class="field">
+      <label>Nettleie energi-ledd (NOK/kWh)</label>
+      <input type="number" id="grid" value="0.45" step="0.05">
+    </div>
+    <div class="field">
+      <label>Effektiv miner-strømpris (NOK/kWh)</label>
+      <input type="number" id="miner_eff_price" value="0.90" step="0.05">
+      <div class="hint">Wattoshi-styring mot lave spot-timer kan trekke snittet under spotpris.</div>
+    </div>
+  </div>
+
+  <div id="norge_fields" class="adv-grid" style="display:none">
+    <div class="field">
+      <label>Fastpris kjøp inkl. mva (NOK/kWh)</label>
+      <input type="number" id="norge_fast" value="0.50" step="0.05">
+      <div class="hint">Norgespris-ordningen: 50 øre/kWh inkl. mva.</div>
+    </div>
+    <div class="field">
+      <label>Nettleie energi-ledd (NOK/kWh)</label>
+      <input type="number" id="norge_grid" value="0.40" step="0.05">
+      <div class="hint">Total kjøpspris blir typisk ~0,90 kr/kWh.</div>
+    </div>
+  </div>
+
+  <div class="field" style="background:var(--light);padding:10px 14px;border-radius:8px;margin-top:10px">
+    <div style="font-size:12px;color:var(--muted);">EFFEKTIVE PRISER (beregnet)</div>
+    <div style="margin-top:4px"><strong>Kjøp:</strong> <span id="eff_buy">—</span> · <strong>Salg/eksport:</strong> <span id="eff_sale">—</span> · <strong>Miner-strøm:</strong> <span id="eff_miner">—</span></div>
+  </div>
+
+  <div class="adv-grid" style="margin-top:14px">
+    <div class="field">
+      <label>Salgspris plusskunde (NOK/kWh)</label>
+      <input type="number" id="sale_price" value="0.75" step="0.05">
+      <div class="hint">Markedsbasert spot eks. mva, gjelder uansett modell.</div>
+    </div>
+    <div class="field">
+      <label>Skattefri grense for strømsalg (kr/år)</label>
+      <input type="number" id="tax_free_limit" value="15000" step="1000">
+      <div class="hint">Norsk regel: inntekt fra solcelle-eksport er skattefri opp til 15 000 kr/år. Sett til 0 for å deaktivere.</div>
+    </div>
+    <div class="field">
+      <label>Skattesats over grensen (%)</label>
+      <input type="number" id="export_tax_rate" value="22" step="1" min="0" max="50">
+      <div class="hint">Kapitalinntekt 22 %. Påvirker kun anlegg med eksport-inntekt over 15k/år (typisk 27+ kWp).</div>
+    </div>
+  </div>
+
+  <h3 style="margin:18px 0 8px 0;font-size:13px;text-transform:uppercase;letter-spacing:0.4px;color:var(--dark);">BTC og valuta</h3>
+  <div class="adv-grid">
+    <div class="field">
+      <label>BTC-pris i dag (USD)</label>
+      <input type="number" id="btc_price" value="80000" step="1000">
+    </div>
+    <div class="field">
+      <label>USD/NOK</label>
+      <input type="number" id="usdnok" value="10.6" step="0.1">
+    </div>
+    <div class="field">
+      <label>Hashprice i dag (USD/TH/dag)</label>
+      <input type="number" id="hashprice" value="0.033" step="0.001">
+      <div class="hint">Kilde: hashrateindex.com, mai 2026.</div>
+    </div>
+    <div class="field">
+      <label>År til neste BTC-halving</label>
+      <input type="number" id="halving_in" value="2" min="0" max="4" step="1">
+      <div class="hint">Neste halving: april 2028. Hashprice halveres ved hver halving (skjer hvert 4. år).</div>
+    </div>
+  </div>
+
+  <h3 style="margin:18px 0 8px 0;font-size:13px;text-transform:uppercase;letter-spacing:0.4px;color:var(--dark);">Miner-drift</h3>
+  <div class="adv-grid">
+    <div class="field">
+      <label>Uptime (% av året)</label>
+      <input type="number" id="uptime" value="40" step="5" min="0" max="100">
+      <div class="hint">Wattoshi styrer mot lønnsomme timer — sjelden full drift.</div>
+    </div>
+    <div class="field">
+      <label>Andel drift i varmesesong (%)</label>
+      <input type="number" id="heat_share" value="40" step="5" min="0" max="100">
+      <div class="hint">Hvor stor andel av miner-tiden som faktisk erstatter oppvarming.</div>
+    </div>
+  </div>
+
+  <h3 style="margin:18px 0 8px 0;font-size:13px;text-transform:uppercase;letter-spacing:0.4px;color:var(--dark);">Analyseperiode</h3>
+  <div class="adv-grid">
+    <div class="field">
+      <label>År</label>
+      <input type="number" id="years" value="10" min="3" max="50">
+      <div class="hint">Styres normalt fra knappene over grafen.</div>
+    </div>
+  </div>
+
+  <p style="font-size:12px;color:var(--muted);margin-top:16px">
+    Modellen forenkler: hashprice halveres ved hver BTC-halving (~hvert 4. år), men antas konstant mellom halvinger — i praksis svinger den med nettverkshashrate, BTC-pris og fees.
+    Mineren forutsetter at varmen kan utnyttes (panelovn-erstatning); ved varmepumpe reduseres varmegevinsten kraftig.
+    Vedlikehold, utskifting (3–5 års levetid) og effektledd i nettleien er ikke modellert. BTC kan falle i verdi.
+  </p>
+</details>
+
+</main>
+
+<section class="strategy-pillars">
+  <div class="strategy-pillars-inner">
+    <div class="pillars-lead">
+      <span class="pillars-eyebrow">Muligheter</span>
+      <p class="pillars-headline">Strategien starter enkelt — <span class="pillars-accent">med eksporten din</span>. Derfra kan den utvides med <span class="pillars-accent">miner</span>, <span class="pillars-accent">varmegjenvinning</span> og <span class="pillars-accent">fleksinntekter fra nettet</span>. Hvert steg legger en ny inntektsstrøm til solanlegget.</p>
+    </div>
+    <div class="pillars-grid">
+      <article class="pillar pillar-start">
+        <div class="pillar-num">Steg 1)</div>
+        <span class="pillar-tag">Sol-overskudd til BTC</span>
+        <h3>Eksport til bitcoin-sparing</h3>
+        <p>Wattoshi konverterer eksport-inntekten din til Bitcoin løpende — dag for dag, gjennom flere markedssykluser. En sparing som vokser i takt med Bitcoin-prisen, og som over tid kan halvere nedbetalingstiden på solanlegget.</p>
+        <a class="pillar-cta" href="https://wattoshi.no/login" target="_blank" rel="noopener">Start nå — registrer bruker <span aria-hidden="true">→</span></a>
+      </article>
+      <article class="pillar">
+        <div class="pillar-num">Steg 2)</div>
+        <span class="pillar-tag">Mining med sol-overskudd</span>
+        <h3>Mining som prisgulv</h3>
+        <p>Solceller produserer mest når alle andre solceller også produserer — og spotprisen faller. En ASIC-miner kjøper strømmen din når nettet underpriser den. Bitcoin-nettverket bryr seg ikke om norsk vær, og gir strømmen din et høyere prisgulv når nettet ellers ikke har etterspørsel.</p>
+        <a class="pillar-cta" href="https://wattoshi.no/store" target="_blank" rel="noopener">Se alle minere her <span aria-hidden="true">→</span></a>
+      </article>
+      <article class="pillar pillar-extra">
+        <div class="pillar-num">Steg 3)</div>
+        <span class="pillar-tag gold">Varme-mining</span>
+        <h3>Varmeutnyttelse og mining om vinteren</h3>
+        <p>Mineren gir tilbake hele strømmen som varme. I oppvarmingssesongen erstatter den panelovner huset uansett ville brukt — samme komfort, samme strømregning. Bitcoin produseres på siden, uten å koste en kilowattime ekstra. Wattoshi tilpasser og installerer smarte varmeløsninger med mining — for både eneboliger og større bygg.</p>
+        <a class="pillar-cta" href="https://wattoshi.no/store/heat" target="_blank" rel="noopener">Se varme-minere her <span aria-hidden="true">→</span></a>
+      </article>
+      <article class="pillar pillar-extra">
+        <div class="pillar-num">Steg 4)</div>
+        <span class="pillar-tag gold">Fleks-markedet</span>
+        <h3>Få fleksibilitetsinntekter med lastene dine</h3>
+        <p>Wattoshi gjør lastene dine — miner, varmtvann, elbil — til kapasitet nettet kan kjøpe. De flyttes på sekundet ved effekttopper eller systembehov, og nettselskapet betaler for fleksibiliteten. En inntekt som kommer på toppen av alt det andre.</p>
+        <a class="pillar-cta" href="https://wattoshi.no/login" target="_blank" rel="noopener">Bli tilgjengelig i fleks-markedet <span aria-hidden="true">→</span></a>
+      </article>
+    </div>
+  </div>
+</section>
+
+<footer class="wat-footer">
+  <div class="wat-footer-inner">
+    <div class="wat-footer-brand">
+      <a class="footer-logo-link" href="https://wattoshi.no" target="_blank" rel="noopener" aria-label="Wattoshi">
+      <svg class="footer-wordmark-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 60" aria-label="Wattoshi">
+        <defs>
+          <clipPath id="wlcf1"><path d="M 1.234375 16 L 66 16 L 66 60 L 1.234375 60 Z"/></clipPath>
+          <clipPath id="wlcf2"><path d="M 279 18 L 298.671875 18 L 298.671875 60 L 279 60 Z"/></clipPath>
+        </defs>
+        <g clip-path="url(#wlcf1)"><path fill="currentColor" d="M 1.234375 20.414062 L 1.234375 18.773438 L 17.394531 18.773438 L 17.394531 44.707031 C 17.394531 50.492188 19.589844 53.921875 23.492188 53.921875 C 28.648438 53.921875 30.371094 48.226562 30.371094 43.925781 L 30.371094 25.96875 C 30.371094 24.085938 29.429688 22.066406 27.863281 20.96875 L 27.167969 20.429688 L 27.167969 18.792969 L 43.328125 18.792969 L 43.328125 43.15625 C 43.328125 50.664062 44.339844 53.9375 48.484375 53.9375 C 56.0625 53.9375 61.058594 43.472656 60.832031 27.621094 C 56.375 28.164062 52.945312 25.359375 52.945312 21.839844 C 52.945312 18.792969 55.519531 16.300781 59.109375 16.300781 C 62.15625 16.300781 66.144531 18.253906 65.519531 30.042969 C 64.578125 46.832031 55.835938 60.035156 43.800781 60.035156 C 37.703125 60.035156 33.332031 56.761719 31.453125 50.976562 C 29.101562 56.671875 23.789062 60.035156 17.308594 60.035156 C 9.035156 60.035156 4.507812 54.253906 4.507812 45.578125 L 4.507812 25.96875 C 4.507812 24.085938 3.496094 22.066406 1.929688 20.96875 L 1.234375 20.429688 Z"/></g>
+        <path fill="currentColor" d="M 104.183594 33.144531 L 104.183594 52.667969 C 104.183594 54.707031 104.808594 55.472656 106.378906 55.472656 C 106.378906 55.472656 107.542969 55.472656 108.171875 54.375 C 108.171875 56.324219 105.367188 60 99.496094 60 C 95.28125 60 92.304688 58.050781 91.453125 54.0625 C 88.875 57.960938 84.660156 60 79.972656 60 C 72.78125 60 67.242188 55.316406 67.242188 48.277344 C 67.242188 33.910156 90.128906 35.476562 90.667969 28.980469 C 89.101562 23.824219 84.972656 22.101562 82.238281 22.101562 C 81.140625 22.101562 80.355469 22.328125 79.972656 22.640625 C 81.296875 23.738281 82.238281 25.445312 82.238281 27.414062 C 82.238281 30.6875 79.503906 33.421875 76.074219 33.421875 C 72.640625 33.421875 69.90625 30.6875 69.90625 27.101562 C 69.90625 21.71875 75.757812 17.886719 85.597656 17.886719 C 94.34375 17.886719 104.183594 20.933594 104.183594 33.109375 Z M 91.207031 34.78125 C 87.304688 37.585938 80.199219 38.925781 80.199219 45.632812 C 80.199219 49.53125 82.621094 51.953125 85.128906 51.953125 C 87.933594 51.953125 90.753906 48.90625 91.226562 44.289062 L 91.226562 34.761719 Z"/>
+        <path fill="currentColor" d="M 111.359375 23.617188 L 105.941406 23.617188 L 107.683594 15.292969 L 107.875 15.292969 C 112.875 15.292969 121.148438 7.558594 121.148438 2.804688 L 124.246094 2.804688 L 124.246094 15.292969 L 128.863281 15.292969 L 127.121094 23.617188 L 124.246094 23.617188 L 124.246094 52.667969 C 124.246094 54.707031 124.945312 55.472656 126.441406 55.472656 C 126.441406 55.472656 127.695312 55.472656 128.324219 54.375 C 128.324219 56.324219 125.519531 60 119.578125 60 C 114.425781 60 111.375 57.195312 111.375 51.011719 L 111.375 23.597656 Z"/>
+        <path fill="currentColor" d="M 135.132812 23.617188 L 129.714844 23.617188 L 131.457031 15.292969 L 131.648438 15.292969 C 136.648438 15.292969 144.921875 7.558594 144.921875 2.804688 L 148.019531 2.804688 L 148.019531 15.292969 L 156.117188 15.292969 L 154.378906 23.617188 L 148.019531 23.617188 L 148.019531 52.667969 C 148.019531 54.707031 148.71875 55.472656 150.214844 55.472656 C 150.214844 55.472656 151.46875 55.472656 152.097656 54.375 C 152.097656 56.324219 149.292969 60 143.351562 60 C 138.199219 60 135.148438 57.195312 135.148438 51.011719 L 135.148438 23.597656 Z"/>
+        <path fill="currentColor" d="M 198.546875 29.398438 C 198.546875 22.363281 205.113281 17.921875 215.109375 17.921875 C 225.105469 17.921875 230.488281 22.695312 230.488281 27.292969 C 230.488281 30.496094 228.066406 32.917969 225.019531 32.917969 C 221.972656 32.917969 219.480469 30.496094 219.480469 27.449219 C 219.480469 25.722656 220.265625 24.085938 221.519531 23.148438 C 220.890625 22.449219 218.785156 21.734375 216.519531 21.734375 C 212.933594 21.734375 210.894531 23.617188 210.894531 25.882812 C 210.894531 33.144531 231.113281 35.179688 231.113281 48.296875 C 231.113281 55.644531 224.792969 60.015625 214.167969 60.015625 C 202.917969 60.015625 196.59375 55.175781 196.59375 49.863281 C 196.59375 46.277344 199.328125 43.453125 202.847656 43.453125 C 206.367188 43.453125 209.011719 46.257812 209.011719 49.707031 C 209.011719 51.65625 208.074219 53.292969 206.75 54.480469 C 207.53125 55.019531 208.945312 55.734375 211.902344 55.734375 C 216.589844 55.734375 218.695312 53.9375 218.695312 51.429688 C 218.695312 43.925781 198.546875 41.433594 198.546875 29.398438 Z"/>
+        <path fill="currentColor" d="M 261.421875 33.214844 C 261.421875 27.519531 259.222656 24.070312 255.324219 24.070312 C 251.648438 24.070312 249 27.429688 248.445312 32.585938 L 248.445312 52.039062 C 248.445312 53.921875 249.542969 55.871094 250.953125 57.039062 L 251.734375 57.578125 L 251.734375 59.214844 L 232.28125 59.214844 L 232.28125 57.578125 L 232.976562 57.039062 C 234.546875 55.871094 235.554688 53.921875 235.554688 52.039062 L 235.554688 12.210938 C 235.554688 10.328125 234.546875 8.308594 232.976562 7.210938 L 232.28125 6.582031 L 232.28125 5.015625 L 245.238281 2.59375 L 248.445312 2.59375 L 248.445312 24.941406 C 251.246094 20.570312 255.953125 17.902344 261.488281 17.902344 C 269.851562 17.902344 274.378906 23.757812 274.378906 32.429688 L 274.378906 52.648438 C 274.378906 54.6875 275.003906 55.453125 276.570312 55.453125 C 276.570312 55.453125 277.738281 55.453125 278.453125 54.355469 C 278.453125 56.308594 275.5625 59.984375 269.710938 59.984375 C 264.554688 59.984375 261.4375 57.179688 261.4375 50.996094 L 261.4375 33.195312 Z"/>
+        <g clip-path="url(#wlcf2)"><path fill="currentColor" d="M 298.671875 57.578125 L 298.671875 59.214844 L 279.21875 59.214844 L 279.21875 57.578125 L 279.917969 57.039062 C 281.484375 55.871094 282.492188 53.921875 282.492188 52.039062 L 282.492188 28.371094 C 282.492188 26.492188 281.484375 24.46875 279.917969 23.371094 L 279.21875 22.832031 L 279.21875 21.195312 L 292.175781 18.773438 L 295.382812 18.773438 L 295.382812 52.039062 C 295.382812 53.921875 296.476562 55.871094 297.890625 57.039062 Z"/></g>
+        <path fill="#F7931A" d="M 288.921875 0 C 293.0625 0 296.425781 3.429688 296.425781 7.507812 C 296.425781 11.582031 293.0625 14.925781 288.921875 14.925781 C 284.777344 14.925781 281.5 11.566406 281.5 7.507812 C 281.5 3.449219 284.863281 0 288.921875 0 Z"/>
+        <path fill="currentColor" d="M 175.035156 17.902344 C 187.609375 17.902344 195.8125 26.265625 195.8125 38.683594 C 195.8125 51.101562 187.382812 60 174.652344 60 C 161.917969 60 153.714844 51.484375 153.714844 38.996094 C 153.714844 26.507812 162.300781 17.902344 175.035156 17.902344 Z M 174.652344 55.15625 C 179.578125 55.15625 182.855469 48.679688 182.855469 38.996094 C 182.855469 29.3125 179.578125 22.832031 174.738281 22.832031 C 169.894531 22.832031 166.691406 29.3125 166.691406 39.152344 C 166.691406 48.992188 169.894531 55.15625 174.652344 55.15625 Z"/>
+      </svg>
+      </a>
+      <span class="footer-tag">· Energi til Bitcoin</span>
+    </div>
+    <p class="wat-disclaimer">
+      Tallene er estimater basert på antakelsene du selv styrer. Bitcoin- og kraftpriser endrer seg —
+      Wattoshi modellerer strategien, men markedet leverer resultatet. Ingen garanti for fremtidig avkastning.
+      <span class="wat-source">Kilder: hashrateindex.com (mai 2026), BTC ≈ $80k (mai 2026).</span>
+    </p>
+    <div class="wat-contact">
+      Kontakt: <a href="mailto:preben@wattoshi.no">preben@wattoshi.no</a>
+      <span class="wat-contact-sep">·</span>
+      <a href="https://wattoshi.no" target="_blank" rel="noopener">wattoshi.no</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+const fmtNOK = (n) => {
+  if (!isFinite(n)) return "—";
+  const sign = n < 0 ? "-" : "";
+  const abs = Math.abs(Math.round(n));
+  return sign + abs.toLocaleString("nb-NO") + " kr";
+};
+const fmtBTC = (n) => isFinite(n) ? n.toFixed(4) + " BTC" : "—";
+const fmtYears = (n) => isFinite(n) ? n.toFixed(1) + " år" : "—";
+
+// Toggle groups
+document.querySelectorAll(".toggle-group").forEach(group => {
+  group.addEventListener("click", e => {
+    if (e.target.tagName !== "BUTTON") return;
+    group.querySelectorAll("button").forEach(b => b.classList.remove("active"));
+    e.target.classList.add("active");
+
+    // Skift mellom Norgespris- og markedsfelt
+    if (group.id === "price_model") {
+      const isNorge = e.target.dataset.val === "norge";
+      document.getElementById("market_fields").style.display = isNorge ? "none" : "";
+      document.getElementById("norge_fields").style.display = isNorge ? "" : "none";
+    }
+
+    recalc();
+  });
+});
+
+const getActive = (id) => {
+  const el = document.querySelector(`#${id} button.active`);
+  return el ? parseFloat(el.dataset.val) : 0;
+};
+
+const $ = (id) => parseFloat(document.getElementById(id).value);
+
+let chart;
+
+function calculate() {
+  // Inputs
+  const kwp = $("kwp");
+  const prod = $("prod");
+  const invest = $("invest");
+  const convertPct = $("convert") / 100;
+  const minerN = getActive("miner_count");
+  const minerKw = $("miner_kw");
+  const minerTh = $("miner_th");
+  const minerPrice = $("miner_price");
+  // Total investering for Wattoshi-scenarioet = solar + minere
+  const minerCost = minerN * minerPrice;
+  const investTotal = invest + minerCost;
+  document.getElementById("miner_price_label").textContent = fmtNOK(minerPrice);
+  const growth = $("growth_slider") / 100;
+  const taxOn = (document.querySelector("#tax_toggle button.active")?.dataset.val === "on");
+  const halvingIn = $("halving_in");
+  // Tidsperiode fra toggle-knappene over chart-en overstyrer "years"-input i avansert
+  const periodToggle = document.querySelector("#period_pick button.active")?.dataset.val;
+  if (periodToggle) document.getElementById("years").value = periodToggle;
+
+  // Advanced
+  const btcStart = $("btc_price");
+  const usdnok = $("usdnok");
+  const hashprice = $("hashprice");
+  const uptime = $("uptime") / 100;
+  const heatShare = $("heat_share") / 100;
+  // Samme egenforbruks-andel brukes for begge kolonner (Wattoshi har ingen "magic"
+  // selvforbruksøkning — den merverdien er BTC-konvertering + miner-effekter)
+  const selfW = $("self_use") / 100;
+  const selfBase = selfW;
+  const salePrice = $("sale_price");
+  const years = $("years");
+
+  // Strømprismodell — Norgespris vs markedsbasert
+  const priceModel = document.querySelector("#price_model button.active")?.dataset.val || "market";
+  let buyPrice, minerEffPrice;
+  if (priceModel === "norge") {
+    buyPrice = $("norge_fast") + $("norge_grid");
+    // Med Norgespris koster all strøm det samme — Wattoshi-styring mot spot gir ingen besparelse
+    minerEffPrice = buyPrice;
+  } else {
+    const spot = $("spot");
+    const grid = $("grid");
+    buyPrice = spot + grid;
+    minerEffPrice = $("miner_eff_price");
+  }
+
+  // Vis effektive priser
+  const fmtKr = (v) => v.toFixed(2).replace(".", ",") + " kr/kWh";
+  document.getElementById("eff_buy").textContent = fmtKr(buyPrice);
+  document.getElementById("eff_sale").textContent = fmtKr(salePrice);
+  document.getElementById("eff_miner").textContent = fmtKr(minerEffPrice);
+
+  // Skattefri grense for strømsalg fra solcelle (norsk regel: 15k/år)
+  const taxFreeLimit = $("tax_free_limit");
+  const exportTaxRate = $("export_tax_rate") / 100;
+  const exportTaxOn = (grossExportNOK) => {
+    if (taxFreeLimit <= 0 || exportTaxRate <= 0) return 0;
+    return Math.max(0, grossExportNOK - taxFreeLimit) * exportTaxRate;
+  };
+
+  // === SOLCELLE ALENE (baseline) ===
+  const solar_a_self = prod * selfBase * buyPrice;
+  const solar_a_export_gross = prod * (1 - selfBase) * salePrice;
+  const solar_a_export = solar_a_export_gross - exportTaxOn(solar_a_export_gross);
+  const solar_a_total = solar_a_self + solar_a_export;
+
+  // === MED WATTOSHI ===
+  // Styringen øker selvforbruk
+  const solar_w_self_kwh = prod * selfW;
+  const solar_w_export_kwh = prod * (1 - selfW);
+  const solar_w_self = solar_w_self_kwh * buyPrice;
+  const solar_w_export_gross = solar_w_export_kwh * salePrice;
+  // Skatt på strømsalg trekkes FØR konvertering til BTC (skatteetaten ser to transaksjoner)
+  const solar_w_export_value = solar_w_export_gross - exportTaxOn(solar_w_export_gross);
+
+  // Eksport som konverteres til BTC (vs. holdes som kontant)
+  const export_to_btc_NOK = solar_w_export_value * convertPct;
+  const export_kept_cash = solar_w_export_value * (1 - convertPct);
+  const solar_w_drift_cash = solar_w_self + export_kept_cash;
+
+  // BTC fra eksport-konvertering år 1 (NOK -> BTC)
+  const btc_from_export = export_to_btc_NOK / (btcStart * usdnok);
+
+  // === MINER (statiske parametere) ===
+  const totalHash = minerN * minerTh;
+  const totalKw = minerN * minerKw;
+  const hours = 8760 * uptime;
+  const minerKwh = totalKw * hours;
+
+  // Varmegjenvinning og ekstra strøm — flatt per år (avhenger av drift, ikke hashprice)
+  let miner_heat_saved = 0, miner_extra_strom = 0;
+  if (minerN > 0) {
+    miner_heat_saved = minerKwh * heatShare * buyPrice;
+    miner_extra_strom = minerKwh * (1 - heatShare) * minerEffPrice;
+  }
+  const miner_net_drift = miner_heat_saved - miner_extra_strom;
+  const w_drift_total = solar_w_drift_cash + miner_net_drift;
+
+  // === ÅRSVIS PROSJEKSJON med hashprice-halving + skatt ===
+  const labels = [], curveAlone = [], curveW = [];
+  let cumCashAlone = 0, cumCashW = 0;
+  let cumBtc = 0;
+  let totalCostBasis = 0; // for skatt-beregning
+  let payback_alone = null, payback_w = null;
+  let btc_stack_final = 0, total_final = 0, stackValue_final = 0, exitValue_final = 0;
+  let miner_btc_year1 = 0;
+
+  for (let y = 1; y <= Math.round(years); y++) {
+    labels.push("År " + y);
+    cumCashAlone += solar_a_total;
+    cumCashW += w_drift_total;
+
+    // Hashprice halveres ved hver halving (etter halvingIn år, deretter hvert 4. år)
+    // Generalisert for analyseperioder opp til 30+ år
+    let halvings = 0;
+    let halvingYear = halvingIn + 1;
+    while (halvingYear <= y) {
+      halvings++;
+      halvingYear += 4;
+    }
+    const hashpriceY = hashprice * Math.pow(0.5, halvings);
+
+    // BTC-pris dette året
+    const btcPriceY = btcStart * Math.pow(1 + growth, y - 1);
+
+    // BTC fra mining dette året (hashprice synker, BTC-pris endrer seg)
+    const usdMinerY = totalHash * hashpriceY * 365 * uptime;
+    const btcMineY = btcPriceY > 0 ? usdMinerY / btcPriceY : 0;
+    if (y === 1) miner_btc_year1 = btcMineY;
+
+    // BTC fra eksport-konvertering: NOK-beløp er konstant, BTC mengde varierer med BTC-pris
+    const btcFromExportY = btcPriceY > 0
+      ? (export_to_btc_NOK / (btcPriceY * usdnok))
+      : 0;
+
+    const btcAddedY = btcMineY + btcFromExportY;
+    cumBtc += btcAddedY;
+    // Kostpris (markedsverdi ved produksjonstidspunkt) — bruker BTC-pris dette året
+    totalCostBasis += btcAddedY * btcPriceY * usdnok;
+
+    // Stack-verdi til markedspris dette året
+    const stackValueGross = cumBtc * btcPriceY * usdnok;
+
+    // Skatt (kun hvis exit dette året + gevinst)
+    let stackValueAfterTax = stackValueGross;
+    if (taxOn) {
+      const gain = stackValueGross - totalCostBasis;
+      const tax = Math.max(0, gain) * 0.22;
+      stackValueAfterTax = stackValueGross - tax;
+    }
+
+    const totalAlone = cumCashAlone;
+    const totalW = cumCashW + stackValueAfterTax;
+
+    curveAlone.push(totalAlone);
+    curveW.push(totalW);
+
+    if (payback_alone === null && totalAlone >= invest) payback_alone = y;
+    if (payback_w === null && totalW >= investTotal) payback_w = y;
+
+    if (y === Math.round(years)) {
+      btc_stack_final = cumBtc;
+      total_final = totalW;
+      stackValue_final = stackValueAfterTax;
+      exitValue_final = totalW;
+    }
+  }
+  const btc_stack_year10 = btc_stack_final;
+  const total_year10 = total_final;
+
+  // Mer presis nedbetaling (interpolering)
+  const interp = (curve, target) => {
+    for (let i = 0; i < curve.length; i++) {
+      if (curve[i] >= target) {
+        if (i === 0) return curve[i] === target ? 1 : 1;
+        const prev = curve[i - 1];
+        const frac = (target - prev) / (curve[i] - prev);
+        return i + frac;
+      }
+    }
+    return null;
+  };
+  const pb_alone_in_view = interp(curveAlone, invest);
+  const pb_w_in_view = interp(curveW, investTotal);
+
+  // Ekstrapolert break-even — kjør loopen videre til 50 år hvis ikke truffet innenfor visning
+  function findFullBreakEven() {
+    // Solcelle alene: lineær — direkte formel
+    let pbAloneFull = pb_alone_in_view;
+    if (!pbAloneFull && solar_a_total > 0) {
+      pbAloneFull = invest / solar_a_total;
+      if (pbAloneFull > 50) pbAloneFull = null;
+    }
+    // Wattoshi: ekstrapoler over 50 år
+    let pbWFull = pb_w_in_view;
+    if (!pbWFull) {
+      let cumCashFull = cumCashW;
+      let cumBtcFull = cumBtc;
+      let costFull = totalCostBasis;
+      let prevTotal = curveW.length > 0 ? curveW[curveW.length - 1] : 0;
+      const startYear = Math.round(years) + 1;
+      for (let y = startYear; y <= 50; y++) {
+        cumCashFull += w_drift_total;
+        let halvings = 0;
+        let halvingYear = halvingIn + 1;
+        while (halvingYear <= y) { halvings++; halvingYear += 4; }
+        const hpY = hashprice * Math.pow(0.5, halvings);
+        const bpY = btcStart * Math.pow(1 + growth, y - 1);
+        const usdM = totalHash * hpY * 365 * uptime;
+        const btcM = bpY > 0 ? usdM / bpY : 0;
+        const btcE = bpY > 0 ? export_to_btc_NOK / (bpY * usdnok) : 0;
+        const add = btcM + btcE;
+        cumBtcFull += add;
+        costFull += add * bpY * usdnok;
+        const gross = cumBtcFull * bpY * usdnok;
+        const net = taxOn ? gross - Math.max(0, gross - costFull) * 0.22 : gross;
+        const total = cumCashFull + net;
+        if (total >= investTotal) {
+          if (prevTotal >= investTotal) { pbWFull = y; }
+          else { pbWFull = y - 1 + (investTotal - prevTotal) / (total - prevTotal); }
+          break;
+        }
+        prevTotal = total;
+      }
+    }
+    return { pbAloneFull, pbWFull };
+  }
+  const { pbAloneFull, pbWFull } = findFullBreakEven();
+
+  // Brukes i resten av render-koden:
+  const pb_alone_exact = pbAloneFull;
+  const pb_w_exact = pbWFull;
+
+  // ===== BIDRAG-DEKOMPOSISJON =====
+  // Kjør parallell simulering uten miner for å isolere miner-effekten
+  function simulateWithoutMiner() {
+    // Driftcash uten miner — bare solar + evt kontant fra eksport
+    const drift_no_miner = solar_w_drift_cash;
+    const i_no_miner = invest; // ingen miner-kost
+    let cumCash = 0, cumBtc = 0, costB = 0, prev = 0;
+    for (let y = 1; y <= 50; y++) {
+      cumCash += drift_no_miner;
+      // halvings spiller ingen rolle uten miner, men beholdes for konsistens
+      const bpY = btcStart * Math.pow(1 + growth, y - 1);
+      const btcE = bpY > 0 ? export_to_btc_NOK / (bpY * usdnok) : 0;
+      cumBtc += btcE;
+      costB += btcE * bpY * usdnok;
+      const gross = cumBtc * bpY * usdnok;
+      const net = taxOn ? gross - Math.max(0, gross - costB) * 0.22 : gross;
+      const total = cumCash + net;
+      if (total >= i_no_miner) {
+        if (y === 1) return 1;
+        return y - 1 + (i_no_miner - prev) / (total - prev);
+      }
+      prev = total;
+    }
+    return null;
+  }
+  const pb_no_miner = (convertPct > 0) ? simulateWithoutMiner() : null;
+  // Bidrag fra BTC-konvertering: solar alene → uten miner
+  const saving_btc = (pb_alone_exact && pb_no_miner) ? (pb_alone_exact - pb_no_miner) : null;
+  // Bidrag fra miner: uten miner → med miner
+  const saving_miner = (pb_no_miner && pb_w_exact && minerN > 0) ? (pb_no_miner - pb_w_exact) : null;
+
+  // === RENDER ===
+  document.getElementById("kwp_label").textContent = kwp.toLocaleString("nb-NO") + " kWp";
+  document.getElementById("prod_label").textContent = Math.round(prod).toLocaleString("nb-NO") + " kWh";
+  document.getElementById("inv_label").textContent = fmtNOK(invest);
+  document.getElementById("conv_label").textContent = ($("convert")) + " %";
+  const selfPct = $("self_use");
+  const exportPct = 100 - selfPct;
+  const exportKwh = Math.round(prod * (1 - selfW));
+  document.getElementById("self_label").textContent =
+    selfPct + " % — eksport: " + exportPct + " % (" + exportKwh.toLocaleString("nb-NO") + " kWh)";
+
+  const yr = Math.round(years);
+  document.getElementById("kpi_period").textContent = yr;
+  document.getElementById("kpi_stack_period").textContent = yr;
+  document.getElementById("result_period").textContent = yr;
+  document.querySelectorAll(".tab-year").forEach(el => { el.textContent = yr; });
+
+  // 1. Total verdi
+  document.getElementById("kpi_total").textContent = fmtNOK(total_year10);
+  document.getElementById("kpi_total_sub").innerHTML =
+    "Drift-kontant <strong>" + fmtNOK(cumCashW) + "</strong> + BTC-stack <strong>" + fmtNOK(stackValue_final) + "</strong>"
+    + (taxOn ? " (etter 22 % skatt)" : "")
+    + (minerN > 0 ? " · Investering totalt: <strong>" + fmtNOK(investTotal) + "</strong> (solar " + fmtNOK(invest) + " + miner " + fmtNOK(minerCost) + ")" : "");
+
+  // 2. Anlegget tilbakebetalt
+  const pbWStr = pb_w_exact
+    ? "år " + pb_w_exact.toFixed(1)
+    : "> 50 år";
+  const pbAloneStr = pb_alone_exact
+    ? "år " + pb_alone_exact.toFixed(1)
+    : "> 50 år";
+  document.getElementById("kpi_payback").textContent = pbWStr;
+  document.getElementById("kpi_payback_sub").innerHTML =
+    "Solcelle alene: <strong>" + pbAloneStr + "</strong>";
+
+  // 3. BTC-stack — kroneverdi som hovedtall, mengde som subtekst
+  document.getElementById("kpi_stack").textContent = fmtNOK(stackValue_final);
+  const btcPriceFinal = btcStart * Math.pow(1 + growth, yr - 1);
+  document.getElementById("kpi_stack_sub").innerHTML =
+    "<strong>" + fmtBTC(btc_stack_year10) + "</strong> akkumulert · "
+    + "BTC-pris år " + yr + ": $" + Math.round(btcPriceFinal).toLocaleString("en-US")
+    + (taxOn ? " · etter 22 % skatt" : "");
+
+  // 4. Årlig gevinst på egen strøm — uendret label
+  document.getElementById("kpi_cash").textContent = fmtNOK(w_drift_total);
+
+  // 5. Spart vs. solcelle alene — med nedbrytning på BTC-konvertering vs miner
+  const savedYears = (pb_alone_exact && pb_w_exact) ? (pb_alone_exact - pb_w_exact) : null;
+  const fmtSubYears = (n) => (n >= 0 ? "+" : "") + n.toFixed(1) + " år";
+  if (savedYears !== null && savedYears > 0) {
+    document.getElementById("kpi_saved").textContent = fmtYears(savedYears) + " raskere";
+    let sub = "Solcelle alene: <strong>" + pbAloneStr + "</strong> · Wattoshi: <strong>" + pbWStr + "</strong>";
+    if (saving_btc !== null && saving_miner !== null && minerN > 0) {
+      sub += '<div class="contrib-row">'
+        + '<span class="chip btc"><span class="lbl">BTC-konvertering</span> ' + fmtSubYears(saving_btc) + '</span>'
+        + '<span class="chip miner"><span class="lbl">Miner</span> ' + fmtSubYears(saving_miner) + '</span>'
+        + '</div>';
+    } else if (saving_btc !== null && minerN === 0) {
+      sub += '<div class="contrib-row">'
+        + '<span class="chip btc"><span class="lbl">BTC-konvertering</span> ' + fmtSubYears(saving_btc) + '</span>'
+        + '</div>';
+    }
+    document.getElementById("kpi_saved_sub").innerHTML = sub;
+  } else if (pb_w_exact && !pb_alone_exact) {
+    document.getElementById("kpi_saved").textContent = "≫ raskere";
+    document.getElementById("kpi_saved_sub").innerHTML =
+      "Solcelle alene: <strong>> 50 år</strong> · Wattoshi: <strong>" + pbWStr + "</strong>";
+  } else if (!pb_w_exact && !pb_alone_exact) {
+    document.getElementById("kpi_saved").textContent = "—";
+    document.getElementById("kpi_saved_sub").textContent =
+      "Ingen av alternativene gir tilbakebetaling innen 50 år";
+  } else {
+    document.getElementById("kpi_saved").textContent = "—";
+    document.getElementById("kpi_saved_sub").textContent = "Vs. solcelle alene";
+  }
+
+  // Oppdater growth-slider etikett
+  const growthPct = $("growth_slider");
+  document.getElementById("growth_label").textContent = (growthPct >= 0 ? "+" : "") + growthPct + " % per år";
+
+  document.getElementById("tab_inv_a").textContent = fmtNOK(invest);
+  document.getElementById("tab_inv_b").textContent = fmtNOK(investTotal)
+    + (minerN > 0 ? " (solar + " + minerN + " miner)" : "");
+  document.getElementById("tab_cash_a").textContent = fmtNOK(solar_a_total);
+  document.getElementById("tab_cash_b").textContent = fmtNOK(w_drift_total);
+  document.getElementById("tab_btc").textContent = fmtBTC(btc_stack_year10);
+  document.getElementById("tab_stack").textContent = fmtNOK(stackValue_final);
+  document.getElementById("tab_heat").textContent = fmtNOK(miner_heat_saved);
+  document.getElementById("tab_total_a").textContent = fmtNOK(curveAlone[curveAlone.length - 1]);
+  document.getElementById("tab_total_b").textContent = fmtNOK(total_year10);
+  document.getElementById("tab_pb_a").textContent = pb_alone_exact ? "år " + pb_alone_exact.toFixed(1) : "> " + years;
+  document.getElementById("tab_pb_b").textContent = pb_w_exact ? "år " + pb_w_exact.toFixed(1) : "> " + years;
+
+  // Chart: netto-verdi vs. egen investering (solar alene mot solar-invest, Wattoshi mot total-invest)
+  const netW = curveW.map(v => v - investTotal);
+  const netA = curveAlone.map(v => v - invest);
+  const labelsYear = labels.map((_, i) => i + 1); // numeriske år
+
+  if (chart) chart.destroy();
+  const ctx = document.getElementById("chart").getContext("2d");
+
+  const labelW = "Med Wattoshi" + (pb_w_exact
+    ? " — break-even år " + pb_w_exact.toFixed(1)
+    : " — > " + yr + " år");
+  const labelA = "Solcelle alene" + (pb_alone_exact
+    ? " — break-even år " + pb_alone_exact.toFixed(1)
+    : " — > " + yr + " år");
+
+  // Bygg én sammenhengende Wattoshi-linje, men splitt visuelt i to datasets
+  // (negativ-segment og positiv-segment) for fyll under/over Y=0
+  chart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: labelsYear,
+      datasets: [
+        {
+          label: labelA,
+          data: netA,
+          borderColor: "rgba(10,122,47,0.75)",
+          backgroundColor: "rgba(10,122,47,0.05)",
+          borderDash: [6, 4],
+          borderWidth: 2.5,
+          tension: 0.25,
+          pointRadius: 3,
+          pointBackgroundColor: "#0A7A2F",
+          fill: false,
+        },
+        {
+          label: labelW,
+          data: netW,
+          borderColor: "#0A7A2F",
+          backgroundColor: "rgba(10,122,47,0.15)",
+          borderWidth: 3,
+          tension: 0.25,
+          pointRadius: 4,
+          pointBackgroundColor: function(context) {
+            const v = context.parsed && context.parsed.y;
+            return (v !== undefined && v < 0) ? "#F7931A" : "#0A7A2F";
+          },
+          segment: {
+            borderColor: function(ctx) {
+              return ctx.p0.parsed.y < 0 ? "#F7931A" : "#0A7A2F";
+            },
+            backgroundColor: function(ctx) {
+              return ctx.p0.parsed.y < 0 ? "rgba(247,147,26,0.20)" : "rgba(10,122,47,0.20)";
+            }
+          },
+          fill: "origin",
+        }
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: {
+          position: "bottom",
+          labels: { boxWidth: 14, font: { size: 12, weight: "600" }, color: "#3C4A66" },
+        },
+        tooltip: {
+          callbacks: {
+            title: (items) => "År " + items[0].label,
+            label: (ctx) =>
+              ctx.dataset.label.split(" — ")[0] + ": " + fmtNOK(ctx.parsed.y),
+          },
+        },
+      },
+      scales: {
+        y: {
+          ticks: {
+            color: "#3C4A66",
+            font: { weight: "600", size: 11.5 },
+            callback: (v) =>
+              (v >= 0 ? "+" : "") + (v / 1000).toFixed(0) + "k",
+          },
+          grid: { color: "rgba(60,74,102,0.10)", drawBorder: false },
+          title: { display: true, text: "Netto verdi (kr)", color: "#5C6A85", font: { weight: "600" } },
+        },
+        x: {
+          ticks: { color: "#3C4A66", font: { weight: "600", size: 11.5 } },
+          title: { display: true, text: "År", color: "#5C6A85", font: { weight: "600" } },
+          grid: { color: "rgba(60,74,102,0.08)", drawBorder: false },
+        },
+      },
+    },
+    plugins: [
+      {
+        id: "breakEvenMarkers",
+        afterDraw: (c) => {
+          const yScale = c.scales.y;
+          const xScale = c.scales.x;
+          const cctx = c.ctx;
+          const area = c.chartArea;
+
+          // Horizontal break-even line at Y=0
+          const zeroY = yScale.getPixelForValue(0);
+          cctx.save();
+          cctx.strokeStyle = "rgba(10,122,47,0.6)";
+          cctx.setLineDash([3, 3]);
+          cctx.lineWidth = 1;
+          cctx.beginPath();
+          cctx.moveTo(area.left, zeroY);
+          cctx.lineTo(area.right, zeroY);
+          cctx.stroke();
+          cctx.fillStyle = "#0A7A2F";
+          cctx.font = "bold 11px sans-serif";
+          cctx.fillText("Break-even (anlegg betalt ned)", area.left + 6, zeroY - 5);
+
+          // Vertical lines at break-even years
+          const xAtYear = (yr) => {
+            const idx = yr - 1; // år 1 = index 0
+            const lo = Math.floor(idx);
+            const hi = Math.min(Math.ceil(idx), labelsYear.length - 1);
+            const xLo = xScale.getPixelForValue(lo);
+            const xHi = xScale.getPixelForValue(hi);
+            return xLo + (xHi - xLo) * (idx - lo);
+          };
+
+          if (pb_w_exact && pb_w_exact <= yr) {
+            const x = xAtYear(pb_w_exact);
+            cctx.setLineDash([5, 4]);
+            cctx.strokeStyle = "#0A7A2F";
+            cctx.lineWidth = 1.5;
+            cctx.beginPath();
+            cctx.moveTo(x, area.top);
+            cctx.lineTo(x, area.bottom);
+            cctx.stroke();
+            cctx.fillStyle = "#0A7A2F";
+            cctx.font = "bold 10px sans-serif";
+            cctx.fillText(
+              "WATTOSHI: år " + pb_w_exact.toFixed(1),
+              x + 4,
+              area.top + 14
+            );
+          }
+          if (pb_alone_exact && pb_alone_exact <= yr) {
+            const x = xAtYear(pb_alone_exact);
+            cctx.setLineDash([3, 3]);
+            cctx.strokeStyle = "rgba(10,122,47,0.65)";
+            cctx.lineWidth = 1.5;
+            cctx.beginPath();
+            cctx.moveTo(x, area.top);
+            cctx.lineTo(x, area.bottom);
+            cctx.stroke();
+            cctx.fillStyle = "#0A7A2F";
+            cctx.font = "bold 10.5px sans-serif";
+            cctx.fillText(
+              "NORMAL: år " + pb_alone_exact.toFixed(1),
+              x + 4,
+              area.top + 28
+            );
+          }
+          cctx.restore();
+        },
+      },
+    ],
+  });
+}
+
+function recalc() {
+  try { calculate(); } catch (e) { console.error(e); }
+}
+
+// Bind alle inputs
+document.querySelectorAll("input").forEach(el => {
+  el.addEventListener("input", recalc);
+});
+
+// Dynamisk fyll-prosent på range-slidere (BTC-orange fyll opp til thumb)
+function updateRangeFills() {
+  document.querySelectorAll('input[type=range]').forEach(el => {
+    const min = parseFloat(el.min) || 0;
+    const max = parseFloat(el.max) || 100;
+    const val = parseFloat(el.value);
+    const pct = ((val - min) / (max - min)) * 100;
+    el.style.setProperty("--fill", pct + "%");
+  });
+}
+document.querySelectorAll('input[type=range]').forEach(el => {
+  el.addEventListener("input", updateRangeFills);
+});
+updateRangeFills();
+
+// Init
+recalc();
+</script>
+
+</body>
+</html>
